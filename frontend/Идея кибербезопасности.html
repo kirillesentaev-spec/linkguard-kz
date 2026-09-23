@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LinkGuard KZ</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+    <header>
+
+        <div class="logo">
+            🛡️ LinkGuard KZ
+        </div>
+
+        <div class="online">
+            ● System Online
+        </div>
+
+    </header>
+
+
+    <main>
+
+        <section class="hero">
+
+            <div class="badge">
+                CYBERSECURITY • URL ANALYZER
+            </div>
+
+
+            <h1>
+                Проверь ссылку<br>
+                <span>перед переходом</span>
+            </h1>
+
+
+            <p>
+                LinkGuard KZ анализирует ссылки
+                и помогает обнаруживать подозрительные URL.
+            </p>
+
+
+            <div class="search">
+
+                <input
+                    id="url"
+                    type="text"
+                    placeholder="https://example.com"
+                >
+
+                <button onclick="checkURL()">
+                    Проверить
+                </button>
+
+            </div>
+
+
+            <div class="hint">
+                🔒 Мы не открываем проверяемую ссылку
+            </div>
+
+        </section>
+
+
+        <section id="loading" class="loading hidden">
+
+            <div class="loader"></div>
+
+            <h3>
+                Анализируем ссылку...
+            </h3>
+
+            <p>
+                Проверяем Local Analyzer,
+                VirusTotal и Google Safe Browsing
+            </p>
+
+        </section>
+
+
+        <section id="result" class="result hidden">
+
+            <div class="result-top">
+
+                <div>
+
+                    <div class="result-label">
+                        ANALYSIS RESULT
+                    </div>
+
+                    <h2 id="status">
+                        —
+                    </h2>
+
+                </div>
+
+
+                <div class="score">
+
+                    <span id="score">
+                        0
+                    </span>
+
+                    <small>/100</small>
+
+                </div>
+
+            </div>
+
+
+            <div class="url-card">
+
+                <div>
+                    URL
+                </div>
+
+                <p id="checked-url">
+                    —
+                </p>
+
+            </div>
+
+
+            <div class="cards">
+
+
+                <div class="card">
+
+                    <div class="icon">
+                        🧠
+                    </div>
+
+                    <h3>
+                        Local Analyzer
+                    </h3>
+
+                    <p id="local-status">
+                        —
+                    </p>
+
+                </div>
+
+
+                <div class="card">
+
+                    <div class="icon">
+                        🦠
+                    </div>
+
+                    <h3>
+                        VirusTotal
+                    </h3>
+
+                    <p id="vt-status">
+                        —
+                    </p>
+
+                </div>
+
+
+                <div class="card">
+
+                    <div class="icon">
+                        🛡️
+                    </div>
+
+                    <h3>
+                        Google Safe Browsing
+                    </h3>
+
+                    <p id="google-status">
+                        —
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="reasons">
+
+                <h3>
+                    🔍 Причины оценки
+                </h3>
+
+                <ul id="reasons"></ul>
+
+            </div>
+
+        </section>
+
+
+        <section class="how">
+
+            <h2>
+                Как работает LinkGuard KZ
+            </h2>
+
+
+            <div class="how-cards">
+
+
+                <div>
+
+                    <strong>
+                        01
+                    </strong>
+
+                    <h3>
+                        Анализ URL
+                    </h3>
+
+                    <p>
+                        Проверяем структуру ссылки,
+                        домен, IP, поддомены и другие признаки.
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        02
+                    </strong>
+
+                    <h3>
+                        Threat Intelligence
+                    </h3>
+
+                    <p>
+                        Используем VirusTotal
+                        и Google Safe Browsing.
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        03
+                    </strong>
+
+                    <h3>
+                        Risk Score
+                    </h3>
+
+                    <p>
+                        Рассчитываем уровень риска
+                        от 0 до 100.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+
+        <span>
+            LinkGuard KZ © 2026
+        </span>
+
+        <span>
+            Defensive Cybersecurity Project
+        </span>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
