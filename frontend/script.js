@@ -37,7 +37,7 @@ async function checkURL() {
         // ==========================================
 
         const response = await fetch(
-            "http://127.0.0.1:8000/check",
+            "https://linkguard-kz.onrender.com/check",
             {
                 method: "POST",
 
