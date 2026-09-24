@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from analyzer import analyze_url
 from virustotal import get_url_report
 from google_safe_browsing import check_google
+from database import init_database, save_scan, get_history
 
 
 app = FastAPI(
@@ -13,7 +14,11 @@ app = FastAPI(
 )
 
 
+# Инициализация базы данных
+init_database()
 
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -24,6 +29,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 class URLRequest(BaseModel):
     url: str
@@ -42,139 +48,109 @@ def check_url(request: URLRequest):
 
     url = request.url.strip()
 
-    # Добавляем HTTPS, если пользователь написал только домен
+    # Если пользователь не написал http/https,
+    # автоматически добавляем HTTPS
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
-    # ==========================================
-    # 1. ЛОКАЛЬНЫЙ АНАЛИЗ
-    # ==========================================
+    # --------------------------------
+    # 1. Локальный анализ
+    # --------------------------------
 
     local = analyze_url(url)
 
-
-    # ==========================================
-    # 2. VIRUSTOTAL
-    # ==========================================
+    # --------------------------------
+    # 2. VirusTotal
+    # --------------------------------
 
     virustotal = get_url_report(url)
 
-
-    # ==========================================
-    # 3. GOOGLE SAFE BROWSING
-    # ==========================================
+    # --------------------------------
+    # 3. Google Safe Browsing
+    # --------------------------------
 
     google = check_google(url)
 
-
-    # ==========================================
-    # НАЧАЛЬНЫЙ RISK SCORE
-    # ==========================================
+    # --------------------------------
+    # 4. Начальный Risk Score
+    # --------------------------------
 
     score = local["score"]
+    reasons = list(local.get("reasons", []))
 
-    reasons = list(
-        local.get("reasons", [])
-    )
+    # --------------------------------
+    # 5. Анализ VirusTotal
+    # --------------------------------
 
+    stats = virustotal.get("stats", {})
 
-    # ==========================================
-    # АНАЛИЗ VIRUSTOTAL
-    # ==========================================
+    malicious = stats.get("malicious", 0)
+    suspicious = stats.get("suspicious", 0)
 
-    stats = virustotal.get(
-        "stats",
-        {}
-    )
-
-    malicious = stats.get(
-        "malicious",
-        0
-    )
-
-    suspicious = stats.get(
-        "suspicious",
-        0
-    )
-
-
-    # Если VirusTotal обнаружил угрозу
     if malicious > 0:
-
-        score = max(
-            score,
-            90
-        )
+        score = max(score, 90)
 
         reasons.append(
-            f"VirusTotal обнаружил "
-            f"{malicious} malicious detection"
+            f"VirusTotal обнаружил {malicious} malicious detection"
         )
 
-
-    # Если есть подозрительные срабатывания
     elif suspicious > 0:
-
-        score = max(
-            score,
-            60
-        )
+        score = max(score, 60)
 
         reasons.append(
-            f"VirusTotal обнаружил "
-            f"{suspicious} suspicious detection"
+            f"VirusTotal обнаружил {suspicious} suspicious detection"
         )
 
-
-    # ==========================================
-    # АНАЛИЗ GOOGLE SAFE BROWSING
-    # ==========================================
+    # --------------------------------
+    # 6. Анализ Google Safe Browsing
+    # --------------------------------
 
     if google.get("found"):
-
-        score = max(
-            score,
-            90
-        )
+        score = max(score, 90)
 
         reasons.append(
             "Google Safe Browsing обнаружил угрозу"
         )
 
+    # --------------------------------
+    # 7. Ограничиваем Score 0–100
+    # --------------------------------
 
-    # ==========================================
-    # ОГРАНИЧИВАЕМ SCORE ОТ 0 ДО 100
-    # ==========================================
+    score = min(score, 100)
 
-    score = min(
-        score,
-        100
-    )
-
-
-    # ==========================================
-    # ОПРЕДЕЛЯЕМ УРОВЕНЬ РИСКА
-    # ==========================================
+    # --------------------------------
+    # 8. Определяем уровень риска
+    # --------------------------------
 
     if score >= 70:
-
         level = "dangerous"
 
     elif score >= 35:
-
         level = "suspicious"
 
     else:
-
         level = "safe"
 
+    # --------------------------------
+    # 9. Сохраняем проверку в SQLite
+    # --------------------------------
 
-    # ==========================================
-    # ОТВЕТ API
-    # ==========================================
+    save_scan(
+        url=url,
+        domain=local.get("domain"),
+        score=score,
+        level=level,
+        reasons=reasons,
+        virustotal_malicious=malicious,
+        virustotal_suspicious=suspicious,
+        google_found=google.get("found", False)
+    )
+
+    # --------------------------------
+    # 10. Возвращаем результат
+    # --------------------------------
 
     return {
-
         "url": url,
 
         "risk": {
@@ -182,9 +158,7 @@ def check_url(request: URLRequest):
             "level": level
         },
 
-        "domain": local.get(
-            "domain"
-        ),
+        "domain": local.get("domain"),
 
         "reasons": reasons,
 
@@ -193,4 +167,17 @@ def check_url(request: URLRequest):
         "virustotal": virustotal,
 
         "google_safe_browsing": google
+    }
+
+
+# --------------------------------
+# История проверок
+# --------------------------------
+
+@app.get("/history")
+def history():
+
+    return {
+        "count": len(get_history()),
+        "items": get_history()
     }

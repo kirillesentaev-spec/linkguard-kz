@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LinkGuard KZ — History</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+        🛡️ LinkGuard KZ
+    </div>
+
+    <div class="status">
+        <span class="status-dot"></span>
+        System Online
+    </div>
+
+</header>
+
+
+<main class="container">
+
+    <section class="hero">
+
+        <p class="eyebrow">
+            SECURITY HISTORY
+        </p>
+
+        <h1>
+            История проверок
+        </h1>
+
+        <p class="subtitle">
+            Все URL-адреса, которые были проверены через LinkGuard KZ.
+        </p>
+
+    </section>
+
+
+    <section class="history-card">
+
+        <div class="history-header">
+
+            <h2>
+                Последние проверки
+            </h2>
+
+            <button onclick="loadHistory()" class="refresh-btn">
+                ↻ Обновить
+            </button>
+
+        </div>
+
+
+        <div id="loading" class="loading">
+            Загрузка истории...
+        </div>
+
+
+        <div id="empty" class="empty" style="display: none;">
+            История проверок пока пуста.
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table id="historyTable" style="display: none;">
+
+                <thead>
+
+                    <tr>
+                        <th>ID</th>
+                        <th>URL</th>
+                        <th>Domain</th>
+                        <th>Score</th>
+                        <th>Level</th>
+                        <th>Date</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="historyBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<footer class="footer">
+
+    <p>
+        🛡️ LinkGuard KZ — Defensive Cybersecurity Tool
+    </p>
+
+</footer>
+
+
+<script>
+
+async function loadHistory() {
+
+    const loading = document.getElementById("loading");
+    const empty = document.getElementById("empty");
+    const table = document.getElementById("historyTable");
+    const body = document.getElementById("historyBody");
+
+    loading.style.display = "block";
+    empty.style.display = "none";
+    table.style.display = "none";
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/history"
+        );
+
+        if (!response.ok) {
+            throw new Error("Server error");
+        }
+
+        const data = await response.json();
+
+        body.innerHTML = "";
+
+        if (data.items.length === 0) {
+
+            loading.style.display = "none";
+            empty.style.display = "block";
+
+            return;
+        }
+
+
+        data.items.forEach(item => {
+
+            const row = document.createElement("tr");
+
+            let levelText = item.level;
+
+            if (item.level === "safe") {
+                levelText = "🟢 SAFE";
+            }
+
+            else if (item.level === "suspicious") {
+                levelText = "🟡 SUSPICIOUS";
+            }
+
+            else if (item.level === "dangerous") {
+                levelText = "🔴 DANGEROUS";
+            }
+
+
+            row.innerHTML = `
+
+                <td>${item.id}</td>
+
+                <td class="url-cell">
+                    ${escapeHTML(item.url)}
+                </td>
+
+                <td>
+                    ${escapeHTML(item.domain || "-")}
+                </td>
+
+                <td>
+                    <strong>
+                        ${item.score}/100
+                    </strong>
+                </td>
+
+                <td>
+                    ${levelText}
+                </td>
+
+                <td>
+                    ${item.created_at}
+                </td>
+
+            `;
+
+            body.appendChild(row);
+
+        });
+
+
+        loading.style.display = "none";
+        table.style.display = "table";
+
+    }
+
+    catch (error) {
+
+        loading.style.display = "none";
+
+        empty.style.display = "block";
+
+        empty.textContent =
+            "Ошибка загрузки истории: " + error.message;
+
+    }
+
+}
+
+
+function escapeHTML(text) {
+
+    const div = document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+
+}
+
+
+loadHistory();
+
+</script>
+
+</body>
+</html>
